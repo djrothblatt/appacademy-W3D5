@@ -109,6 +109,10 @@ class SQLObject
   end
 
   def save
-    # ...
+    if self.id
+      update
+    else
+      insert
+    end
   end
 end
