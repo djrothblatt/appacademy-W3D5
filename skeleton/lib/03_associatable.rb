@@ -23,7 +23,7 @@ class BelongsToOptions < AssocOptions
     defaults = {
       foreign_key: "#{name}_id".to_sym,
       primary_key: "id".to_sym,
-      class_name: name.camelcase
+      class_name: name.to_s.camelcase
     }
     merged_options = defaults.merge(options)
     @foreign_key = merged_options[:foreign_key]
@@ -50,7 +50,12 @@ end
 module Associatable
   # Phase IIIb
   def belongs_to(name, options = {})
-    # ...
+    options = BelongsToOptions.new(name, options)
+    define_method(name) do
+      foreign_key = self.send(options.foreign_key)
+      target_class = options.model_class
+      target_class.where(options.primary_key.to_sym => foreign_key).first
+    end
   end
 
   def has_many(name, options = {})
@@ -63,5 +68,6 @@ module Associatable
 end
 
 class SQLObject
+  extend Associatable
   # Mixin Associatable here...
 end
