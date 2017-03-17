@@ -19,8 +19,7 @@ module Associatable
         JOIN
           #{source_table_name}
         ON
-          #{source_options.foreign_key} =
-            #{source_table_name}.id
+          #{source_options.foreign_key} = #{source_table_name}.id
         WHERE
           #{through_table_name}.id = #{source_options.foreign_key}
       SQL
