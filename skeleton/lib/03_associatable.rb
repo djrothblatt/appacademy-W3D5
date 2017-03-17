@@ -49,8 +49,6 @@ end
 
 module Associatable
   # Phase IIIb
-  # because this will *extend* SQLObject, these methods are *class* methods
-  # so when self is passed into HasManyOptions.new, it refers to the *class*,
   def belongs_to(name, options = {})
     options = BelongsToOptions.new(name, options)
     assoc_options[name] = options
@@ -61,16 +59,14 @@ module Associatable
     end
   end
 
+  # because Associatable will *extend* SQLObject, these methods are *class* methods
+  # so when self is passed into HasManyOptions.new, it refers to the *class*
   def has_many(name, options = {})
     options = HasManyOptions.new(name, self, options)
     define_method(name) do
       primary_key = self.id
       source_class = options.model_class
       source_class.where(options.foreign_key => primary_key)
-      # foreign_key = source_class.send(options.foreign_key)
-      # foreign_key = self.send(options.foreign_key)
-      # target_class = options.model_class
-      # target_class.where(options.primary_key.to_sym => foreign_key)
     end
   end
 
