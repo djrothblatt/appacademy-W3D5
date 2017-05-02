@@ -18,7 +18,7 @@ class SQLObject
       self.send("#{sym}=", value)
     end
   end
-  
+
   def self.column_names
     unless @column_names
       data = DBConnection.execute2(<<-SQL)
@@ -35,8 +35,8 @@ class SQLObject
     @column_names
   end
 
-  def self.finalize! # 'create_accessors!'? private? make it a thing that you don't have to call explicitly
-    SQLObject.column_names.each do |column|
+  def self.finalize!
+    column_names.each do |column|
       define_method(column) { attributes[column] } # defines readers
       define_method("#{column}=") { |val| attributes[column] = val } # defines writers
     end
@@ -58,6 +58,10 @@ class SQLObject
         #{table_name}
     SQL
     parse_all(data)
+  end
+
+  def self.parse_all(results)
+    results.map { |datum| self.new(datum) }
   end
 
   def self.find(id)
@@ -115,10 +119,5 @@ class SQLObject
     else
       insert
     end
-  end
-
-  private
-  def self.parse_all(results)
-    results.map { |datum| self.new(datum) }
   end
 end
