@@ -6,9 +6,21 @@ require 'active_support/inflector'
 class SQLObject
   extend Associatable
   extend Searchable
+
+  def initialize(params = {})
+    params.each do |attr_name, value|
+      sym = attr_name.to_sym
+
+      unless self.class.column_names.include?(sym)
+        raise "unknown attribute '#{attr_name}'"
+      end
+
+      self.send("#{sym}=", value)
+    end
+  end
   
-  def self.columns # column_names?
-    unless @columns # should probably limit 1...
+  def self.column_names
+    unless @column_names
       data = DBConnection.execute2(<<-SQL)
         SELECT
           *
@@ -17,14 +29,14 @@ class SQLObject
         LIMIT
           1
       SQL
-      @columns = data.first.map(&:to_sym)
+      @column_names = data.first.map(&:to_sym)
     end
 
-    @columns
+    @column_names
   end
 
   def self.finalize! # 'create_accessors!'? private? make it a thing that you don't have to call explicitly
-    SQLObject.columns.each do |column|
+    SQLObject.column_names.each do |column|
       define_method(column) { attributes[column] } # defines readers
       define_method("#{column}=") { |val| attributes[column] = val } # defines writers
     end
@@ -48,10 +60,6 @@ class SQLObject
     parse_all(data)
   end
 
-  def self.parse_all(results) # private?
-    results.map { |datum| self.new(datum) }
-  end
-
   def self.find(id)
     data = DBConnection.execute(<<-SQL)
       SELECT
@@ -64,30 +72,18 @@ class SQLObject
     parse_all(data).first
   end
 
-  def initialize(params = {})
-    params.each do |attr_name, value|
-      sym = attr_name.to_sym
-
-      unless self.class.columns.include?(sym)
-        raise "unknown attribute '#{attr_name}'"
-      end
-
-      self.send("#{sym}=", value)
-    end
-  end
-
   def attributes
     @attributes ||= {}
   end
 
   def attribute_values
-    self.class.columns.map do |column|
+    self.class.column_names.map do |column|
       self.send(column)
     end
   end
 
   def insert
-    cols = self.class.columns
+    cols = self.class.column_names
     col_names = cols.join(', ')
     question_marks = (['?'] * cols.length).join(', ')
     DBConnection.execute(<<-SQL, *attribute_values)
@@ -101,7 +97,7 @@ class SQLObject
   end
 
   def update
-    cols = self.class.columns
+    cols = self.class.column_names
     col_bindings = cols.map { |col| "#{col} = ?"}.join(', ')
     DBConnection.execute(<<-SQL, *attribute_values)
       UPDATE
@@ -119,5 +115,10 @@ class SQLObject
     else
       insert
     end
+  end
+
+  private
+  def self.parse_all(results)
+    results.map { |datum| self.new(datum) }
   end
 end

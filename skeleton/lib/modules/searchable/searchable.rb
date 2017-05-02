@@ -1,5 +1,3 @@
-require_relative 'db_connection'
-
 module Searchable
   def where(params)
     keys, vals = params.keys, params.values
