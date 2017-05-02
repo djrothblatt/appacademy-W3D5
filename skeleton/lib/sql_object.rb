@@ -1,16 +1,21 @@
 require_relative 'db_connection'
+require_relative 'modules/associatable/associatable'
+require_relative 'modules/searchable/searchable'
 require 'active_support/inflector'
-# NB: the attr_accessor we wrote in phase 0 is NOT used in the rest
-# of this project. It was only a warm up.
 
 class SQLObject
-  def self.columns
-    unless @columns
+  extend Associatable
+  extend Searchable
+  
+  def self.columns # column_names?
+    unless @columns # should probably limit 1...
       data = DBConnection.execute2(<<-SQL)
         SELECT
           *
         FROM
           #{table_name}
+        LIMIT
+          1
       SQL
       @columns = data.first.map(&:to_sym)
     end
@@ -18,10 +23,10 @@ class SQLObject
     @columns
   end
 
-  def self.finalize!
-    columns.each do |column|
-      define_method(column) { attributes[column] }
-      define_method("#{column}=") { |val| attributes[column] = val }
+  def self.finalize! # 'create_accessors!'? private? make it a thing that you don't have to call explicitly
+    SQLObject.columns.each do |column|
+      define_method(column) { attributes[column] } # defines readers
+      define_method("#{column}=") { |val| attributes[column] = val } # defines writers
     end
   end
 
@@ -43,7 +48,7 @@ class SQLObject
     parse_all(data)
   end
 
-  def self.parse_all(results)
+  def self.parse_all(results) # private?
     results.map { |datum| self.new(datum) }
   end
 
