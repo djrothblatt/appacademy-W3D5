@@ -8,6 +8,8 @@ class SQLObject
   extend Searchable
 
   def initialize(params = {})
+    DBConnection.db_filename = self.class.table_name + '.db'
+
     params.each do |attr_name, value|
       sym = attr_name.to_sym
 
@@ -86,7 +88,7 @@ class SQLObject
     end
   end
 
-  def insert
+  def create
     cols = self.class.column_names
     col_names = cols.join(', ')
     question_marks = (['?'] * cols.length).join(', ')
@@ -113,11 +115,18 @@ class SQLObject
     SQL
   end
 
+  def destroy
+    DBConnection.execute(<<-SQL)
+      DELETE FROM #{self.class.table_name}
+      WHERE id = #{self.id}
+    SQL
+  end
+  
   def save
     if self.id
       update
     else
-      insert
+      create
     end
   end
 end
