@@ -121,7 +121,7 @@ class SQLObject
       WHERE id = #{self.id}
     SQL
   end
-  
+
   def save
     if self.id
       update

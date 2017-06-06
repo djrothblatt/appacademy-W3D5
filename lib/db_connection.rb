@@ -11,7 +11,7 @@ class DBConnection
   def self.db_filename
     @@db_filename
   end
-  
+
   def self.open(db_filename)
     self.db_filename = db_filename
     @db = SQLite3::Database.new(@@db_filename)
