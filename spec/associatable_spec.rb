@@ -1,4 +1,4 @@
-require '03_associatable'
+require 'modules/associatable/associatable'
 
 describe 'AssocOptions' do
   describe 'BelongsToOptions' do

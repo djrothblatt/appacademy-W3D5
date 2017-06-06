@@ -1,4 +1,4 @@
-require '02_searchable'
+require 'modules/searchable/searchable'
 
 describe 'Searchable' do
   before(:each) { DBConnection.reset }
